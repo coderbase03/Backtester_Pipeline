@@ -1,0 +1,39 @@
+# Global Configuration
+
+app:
+  name: "Opus Backtrader"
+  version: "1.0.0"
+  log_level: "INFO"
+
+# Default backtest settings
+backtest:
+  initial_cash: 100000
+  commission: 0.001  # 0.1%
+  slippage: 0.0005   # 0.05%
+  
+# Data settings
+data:
+  default_source: "tvdatafeed"  # tvdatafeed, yfinance, ccxt
+  cache_enabled: true
+  cache_dir: "data/cache"
+  
+  # TradingView login (optional - for extended data access)
+  # Get your credentials from https://www.tradingview.com/
+  tvdatafeed:
+    username: "carkdondur"
+    password: "semihakmesecode123"
+  
+# Database settings
+database:
+  type: "sqlite"
+  path: "data/trading.db"
+
+# Visualization settings
+visualization:
+  theme: "dark"
+  chart_height: 600
+  
+# MLflow settings
+mlflow:
+  tracking_uri: "mlruns"
+  experiment_name: "backtest_experiments"

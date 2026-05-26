@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: opus_backtrader
+      POSTGRES_USER: opus
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opus}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opus -d opus_backtrader"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://opus:${POSTGRES_PASSWORD:-opus}@postgres:5432/opus_backtrader
+      DATABASE_URL_SYNC: postgresql://opus:${POSTGRES_PASSWORD:-opus}@postgres:5432/opus_backtrader
+      REDIS_URL: redis://redis:6379/0
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GLM_API_KEY: ${GLM_API_KEY:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      TV_USERNAME: ${TV_USERNAME:-}
+      TV_PASSWORD: ${TV_PASSWORD:-}
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./config:/app/config:ro
+      - ./data:/app/data
+
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8000
+      NEXT_PUBLIC_WS_URL: ws://backend:8000
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

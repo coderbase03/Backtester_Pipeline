@@ -1,0 +1,173 @@
+# Subreddit Configuration
+# Strateji ve metodoloji odaklı - haberler çıkarıldı
+
+# Öncelik: 1 = En yüksek kalite, 3 = Düşük kalite
+# min_score: Minimum upvote (subreddit kalitesine göre ayarlanabilir)
+# enabled: false yaparak geçici olarak devre dışı bırakabilirsiniz
+
+subreddits:
+  # ===== HIGH QUALITY - Strateji Odaklı (Priority 1) =====
+  high_quality:
+    - name: algotrading
+      priority: 1
+      min_score: 2
+      min_length: 50
+      enabled: true
+      tags: [strategy, backtest, python, quantitative, code]
+      
+    - name: quant
+      priority: 1
+      min_score: 2
+      min_length: 50
+      enabled: true
+      tags: [quantitative, research, academic]
+      
+    - name: quantfinance
+      priority: 1
+      min_score: 2
+      min_length: 50
+      enabled: true
+      tags: [methodology, research, academic]
+      
+    - name: RealDayTrading
+      priority: 1
+      min_score: 3
+      min_length: 50
+      enabled: true
+      tags: [strategy, price-action, technical]
+      
+    - name: thetagang
+      priority: 1
+      min_score: 3
+      min_length: 50
+      enabled: true
+      tags: [options, theta, strategy, wheeling]
+      
+    - name: InnerCircleTraders
+      priority: 1
+      min_score: 2
+      min_length: 50
+      enabled: true
+      tags: [ict, smc, price-action, breaker-blocks, fvg, liquidity]
+      
+    - name: ai_trading
+      priority: 1
+      min_score: 2
+      min_length: 50
+      enabled: true
+      tags: [ai, machine-learning, automation, neural-networks, quantitative]
+
+  # ===== MEDIUM QUALITY - Strateji Paylaşımlı (Priority 2) =====
+  medium_quality:
+    - name: FuturesTrading
+      priority: 2
+      min_score: 5
+      min_length: 75
+      enabled: true
+      tags: [futures, strategy, technical]
+      
+    - name: SwingTrading
+      priority: 2
+      min_score: 5
+      min_length: 75
+      enabled: true
+      tags: [swing, medium-term, strategy]
+      
+    - name: Daytrading
+      priority: 2
+      min_score: 8
+      min_length: 100
+      enabled: true
+      tags: [daytrading, scalping, intraday]
+      
+    - name: Trading
+      priority: 2
+      min_score: 10
+      min_length: 100
+      enabled: true
+      tags: [general, strategy, technical]
+      
+    - name: options
+      priority: 2
+      min_score: 8
+      min_length: 100
+      enabled: true
+      tags: [options, strategy, greeks]
+      
+    - name: Forexstrategy
+      priority: 2
+      min_score: 3
+      min_length: 75
+      enabled: true
+      tags: [forex, strategy, advanced]
+      
+    - name: forex
+      priority: 2
+      min_score: 5
+      min_length: 75
+      enabled: true
+      tags: [forex, currency, strategy]
+      
+    - name: technicalanalysis
+      priority: 2
+      min_score: 3
+      min_length: 50
+      enabled: true
+      tags: [technical, charting, indicators]
+
+  # ===== LOWER QUALITY - Dikkatli Kullan (Priority 3) =====
+  lower_quality:
+    # stocks çıkarıldı - çok general, haber ağırlıklı
+    # CryptoCurrency çıkarıldı - çok haber ağırlıklı
+    # investing çıkarıldı - çok general
+    
+    - name: Optionsexclusive
+      priority: 3
+      min_score: 10
+      min_length: 100
+      enabled: true
+      tags: [options, advanced]
+
+  # ===== EXPERIMENTAL (Priority 4) - DISABLED =====
+  experimental:
+    - name: wallstreetbets
+      priority: 4
+      min_score: 200
+      min_length: 200
+      enabled: false  # Çok gürültülü, meme ağırlıklı
+      tags: [meme, yolo]
+      
+    - name: stockmarket
+      priority: 4
+      min_score: 50
+      min_length: 150
+      enabled: false  # Haber ağırlıklı
+      tags: [news, general]
+      
+    - name: stocks
+      priority: 4
+      min_score: 30
+      min_length: 150
+      enabled: false  # Çok general
+      tags: [general]
+      
+    - name: CryptoCurrency
+      priority: 4
+      min_score: 50
+      min_length: 150
+      enabled: false  # Haber ağırlıklı
+      tags: [crypto, news]
+
+# Global settings
+settings:
+  rate_limit_seconds: 2.0
+  max_posts_per_subreddit: 100
+  default_sort_types: [hot, top, new]
+  default_time_filter: month
+  
+# Quality tier thresholds (AI score)
+quality_tiers:
+  high: 60      # Direkt onayla
+  medium: 40    # Kaydet, review edilebilir
+  low: 20       # Backlog
+  rejected: 0   # Atla

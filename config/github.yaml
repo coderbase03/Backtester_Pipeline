@@ -1,0 +1,83 @@
+# GitHub Strategy Scraper Configuration
+# Trading stratejileri için GitHub arama ayarları
+
+# Arama sorguları
+search_queries:
+  # Pine Script stratejileri
+  pine_script:
+    - "trading strategy language:pine"
+    - "pinescript indicator"
+    - "tradingview strategy"
+    - "pine script buy sell"
+    
+  # Python/Backtrader stratejileri  
+  python_backtrader:
+    - "backtrader strategy"
+    - "trading bot python"
+    - "algorithmic trading python"
+    - "quantitative trading python"
+    
+  # Genel trading
+  general:
+    - "trading algorithm"
+    - "crypto trading bot"
+    - "forex strategy code"
+
+# Hedef repolar (yüksek kaliteli bilinen repolar)
+target_repos:
+  high_quality:
+    - freqtrade/freqtrade
+    - mementum/backtrader
+    - kernc/backtesting.py
+    - jesse-ai/jesse
+    - polakowo/vectorbt
+    
+  pine_script:
+    - pinecoders/tradingview
+    - pinecoders/scriptingtools
+    
+  strategy_collections:
+    - vladkens/trading-strategies
+    - pAulseperwor);/awesome-trading-bot
+
+# Dosya uzantıları
+file_extensions:
+  pine_script: [".pine", ".pinescript", ".txt"]
+  python: [".py"]
+  
+# Dosya adı kalıpları (strateji dosyaları)
+filename_patterns:
+  - "*strategy*"
+  - "*indicator*"
+  - "*signal*"
+  - "*backtest*"
+  - "*algo*"
+  - "*trading*"
+  - "*bot*"
+
+# Ayarlar
+settings:
+  rate_limit_seconds: 2.5
+  max_repos_per_query: 30
+  min_stars: 3
+  max_file_size_kb: 500
+  request_timeout: 30
+  
+# Kalite filtreleri
+quality_filters:
+  min_stars: 3
+  min_forks: 0
+  max_age_days: 365  # Son 1 yılda güncellenen repolar
+  require_readme: true
+  
+# Aranacak README anahtar kelimeleri
+readme_keywords:
+  - backtest
+  - strategy
+  - indicator
+  - trading
+  - buy
+  - sell
+  - signal
+  - entry
+  - exit
