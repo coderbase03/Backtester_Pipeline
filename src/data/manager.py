@@ -37,11 +37,9 @@ class DataManager:
 
         self.config = self._load_config(self.config_path)
         
-        # Initialize database
-        db_path = Path(self.config.get('database', {}).get('path', 'data/trading.db'))
-        if not db_path.is_absolute():
-            db_path = (PROJECT_ROOT / db_path).resolve()
-        self.db = Database(db_path)
+        # Initialize database (PostgreSQL-first)
+        # Legacy sqlite path in settings is ignored in v2 architecture.
+        self.db = Database()
         
         # Lazy-load fetchers
         self._tv_fetcher = None

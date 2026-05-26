@@ -29,6 +29,28 @@ STRATEGY_MAP = {
 }
 
 
+def _resolve_exchange_for_symbol(symbol: str, requested_exchange: Optional[str]) -> Optional[str]:
+    """
+    Resolve exchange per symbol for mixed multi-symbol runs.
+    Prevents invalid combos like BTCUSDT@NASDAQ or AAPL@BINANCE.
+    """
+    s = (symbol or "").upper()
+    ex = (requested_exchange or "").upper() if requested_exchange else None
+
+    # Crypto pairs
+    if any(q in s for q in ("USDT", "BUSD", "USDC")):
+        return "BINANCE"
+
+    # Forex-like
+    if len(s) == 6 and any(q in s for q in ("USD", "EUR", "GBP", "JPY")):
+        return "FX_IDC"
+
+    # Equities/default
+    if ex in {"BINANCE", "FX_IDC"}:
+        return "NASDAQ"
+    return requested_exchange
+
+
 def get_strategy_class(name: str):
     """Resolve strategy name to class."""
     key = name.lower().replace(" ", "_").replace("-", "_")
@@ -141,13 +163,14 @@ def run_multi_backtest(
     results = []
 
     for symbol in symbols:
+        effective_exchange = _resolve_exchange_for_symbol(symbol, exchange)
         for interval in intervals:
             try:
                 r = run_backtest(
                     strategy_name=strategy_name,
                     symbol=symbol,
                     source=source,
-                    exchange=exchange,
+                    exchange=effective_exchange,
                     interval=interval,
                     n_bars=n_bars,
                     initial_cash=initial_cash,
@@ -235,10 +258,11 @@ def run_multi_analyze(
     failures: list[dict] = []
 
     for symbol in symbols:
+        effective_exchange = _resolve_exchange_for_symbol(symbol, exchange)
         for interval in intervals:
             ok, reason = ensure_data_available(
                 symbol=symbol,
-                exchange=exchange,
+                exchange=effective_exchange,
                 interval=interval,
                 n_bars=n_bars,
                 source=source,
@@ -265,7 +289,7 @@ def run_multi_analyze(
                     strategy_name=strategy_name,
                     symbol=symbol,
                     source=source,
-                    exchange=exchange,
+                    exchange=effective_exchange,
                     interval=interval,
                     n_bars=n_bars,
                     initial_cash=initial_cash,

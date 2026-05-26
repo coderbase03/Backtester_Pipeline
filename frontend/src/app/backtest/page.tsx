@@ -33,7 +33,7 @@ export default function BacktestPage() {
     source: "tradingview",
     interval: "1h",
     n_bars: 1000,
-    initial_cash: 100,
+    initial_cash: 100000,
     commission: 0.0005,
     slippage_ticks: 2,
   });
@@ -44,7 +44,6 @@ export default function BacktestPage() {
     sl_pct: 1.5,
     trail_pct: 0.0,
     use_bracket: true,
-    risk_pct: 0.02,
     trade_direction: "both",
     leverage: 1,
   });
@@ -58,7 +57,7 @@ export default function BacktestPage() {
   const [multiInput, setMultiInput] = useState("");
   const [multiTimeframes, setMultiTimeframes] = useState<string[]>(["1h", "4h", "1d"]);
   const [selectedMultiIndex, setSelectedMultiIndex] = useState<number | null>(null);
-  const [showRiskPanel, setShowRiskPanel] = useState(false);
+  const [showRiskPanel, setShowRiskPanel] = useState(true);
   const [analysisResult, setAnalysisResult] = useState<Awaited<ReturnType<typeof backtestApi.analyzeMultiMatrix>> | null>(null);
   const { data: strategies } = useQuery({
     queryKey: ["strategies"],
@@ -84,7 +83,7 @@ export default function BacktestPage() {
         setStrategyParamDefs(data.params);
         const defaults: Record<string, number> = {};
         data.params.forEach((p: StrategyParam) => {
-          if (!["risk_pct", "use_bracket", "tp_pct", "sl_pct", "trail_pct", "trade_direction", "leverage", "log_trades"].includes(p.name)) {
+          if (!["risk_pct", "use_bracket", "tp_pct", "sl_pct", "trail_pct", "trade_direction", "leverage", "log_trades", "position_mode", "fixed_units", "fixed_notional", "cash_buffer_pct"].includes(p.name)) {
             defaults[p.name] = p.default;
           }
         });
@@ -109,7 +108,6 @@ export default function BacktestPage() {
       sl_pct: riskParams.sl_pct,
       trail_pct: riskParams.trail_pct,
       use_bracket: riskParams.use_bracket,
-      risk_pct: riskParams.risk_pct,
       trade_direction: riskParams.trade_direction,
       leverage: riskParams.leverage,
     };
@@ -197,8 +195,11 @@ export default function BacktestPage() {
   }, [multiResults, selectedMultiIndex]);
 
   const visibleStrategyParams = strategyParamDefs.filter(
-    (p) => !["risk_pct", "use_bracket", "tp_pct", "sl_pct", "trail_pct", "trade_direction", "leverage", "log_trades"].includes(p.name)
+    (p) => !["risk_pct", "use_bracket", "tp_pct", "sl_pct", "trail_pct", "trade_direction", "leverage", "log_trades", "position_mode", "fixed_units", "fixed_notional", "cash_buffer_pct"].includes(p.name)
   );
+
+  const singleUnitPnl =
+    singleResult?.trades?.reduce((acc, t) => acc + (Number(t.pnl) || 0), 0) ?? 0;
 
   return (
     <div className="space-y-6">
@@ -318,6 +319,30 @@ export default function BacktestPage() {
                 className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2"
               />
             </label>
+
+            <label className="space-y-1">
+              <span className="text-sm text-[var(--muted)]">Leverage</span>
+              <input
+                type="number"
+                min={1}
+                value={riskParams.leverage}
+                onChange={(e) => setRiskParams({ ...riskParams, leverage: +e.target.value })}
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2"
+              />
+            </label>
+
+            <label className="space-y-1">
+              <span className="text-sm text-[var(--muted)]">Direction</span>
+              <select
+                value={riskParams.trade_direction}
+                onChange={(e) => setRiskParams({ ...riskParams, trade_direction: e.target.value })}
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2"
+              >
+                <option value="both">Both</option>
+                <option value="long">Long Only</option>
+                <option value="short">Short Only</option>
+              </select>
+            </label>
           </div>
 
           {/* Multi-symbol inputs */}
@@ -436,38 +461,6 @@ export default function BacktestPage() {
                   className="w-full rounded-lg border border-[var(--border)] bg-transparent px-3 py-1.5 text-sm"
                 />
               </label>
-              <label className="space-y-1">
-                <span className="text-xs text-[var(--muted)]">Leverage</span>
-                <input
-                  type="number"
-                  min={1}
-                  value={riskParams.leverage}
-                  onChange={(e) => setRiskParams({ ...riskParams, leverage: +e.target.value })}
-                  className="w-full rounded-lg border border-[var(--border)] bg-transparent px-3 py-1.5 text-sm"
-                />
-              </label>
-              <label className="space-y-1">
-                <span className="text-xs text-[var(--muted)]">Risk per Trade %</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={riskParams.risk_pct}
-                  onChange={(e) => setRiskParams({ ...riskParams, risk_pct: +e.target.value })}
-                  className="w-full rounded-lg border border-[var(--border)] bg-transparent px-3 py-1.5 text-sm"
-                />
-              </label>
-              <label className="space-y-1">
-                <span className="text-xs text-[var(--muted)]">Direction</span>
-                <select
-                  value={riskParams.trade_direction}
-                  onChange={(e) => setRiskParams({ ...riskParams, trade_direction: e.target.value })}
-                  className="w-full rounded-lg border border-[var(--border)] bg-transparent px-3 py-1.5 text-sm"
-                >
-                  <option value="both">Both</option>
-                  <option value="long">Long Only</option>
-                  <option value="short">Short Only</option>
-                </select>
-              </label>
               <label className="flex items-center gap-2 self-end py-1.5">
                 <input
                   type="checkbox"
@@ -475,7 +468,7 @@ export default function BacktestPage() {
                   onChange={(e) => setRiskParams({ ...riskParams, use_bracket: e.target.checked })}
                   className="rounded"
                 />
-                <span className="text-xs text-[var(--muted)]">Bracket Orders</span>
+                <span className="text-xs text-[var(--muted)]">Enable TP/SL/TSL (Bracket)</span>
               </label>
 
               {/* Strategy-specific params */}
@@ -536,6 +529,10 @@ export default function BacktestPage() {
       {/* Single result */}
       {mode === "single" && singleResult && (
         <div className="space-y-6">
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 text-xs text-[var(--muted)]">
+            Sizing: <span className="text-[var(--foreground)] font-medium">Full Cash @ 1x</span>
+            <span> | Initial Cash: <span className="text-[var(--foreground)] font-medium">{formatCurrency(form.initial_cash)}</span></span>
+          </div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
             <MetricCard label="Total Return" value={formatPercent(singleResult.total_return)} positive={singleResult.total_return >= 0} />
             <MetricCard label="Sharpe Ratio" value={formatNumber(singleResult.sharpe_ratio)} />
@@ -543,6 +540,15 @@ export default function BacktestPage() {
             <MetricCard label="Win Rate" value={formatPercent(singleResult.win_rate, 1)} />
             <MetricCard label="Profit Factor" value={formatNumber(singleResult.profit_factor)} />
             <MetricCard label="Trades" value={String(singleResult.total_trades)} />
+          </div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <MetricCard label="Unit PnL (Net)" value={formatCurrency(singleUnitPnl)} positive={singleUnitPnl >= 0} />
+            <MetricCard
+              label="Avg Trade PnL"
+              value={formatCurrency(singleResult.total_trades > 0 ? singleUnitPnl / singleResult.total_trades : 0)}
+              positive={(singleResult.total_trades > 0 ? singleUnitPnl / singleResult.total_trades : 0) >= 0}
+            />
+            <MetricCard label="Final Value" value={formatCurrency(singleResult.final_value)} positive={singleResult.final_value >= singleResult.initial_cash} />
           </div>
 
           <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
@@ -632,6 +638,7 @@ export default function BacktestPage() {
                   <th className="px-3 py-2.5">Win Rate</th>
                   <th className="px-3 py-2.5">PF</th>
                   <th className="px-3 py-2.5">Trades</th>
+                  <th className="px-3 py-2.5">Unit PnL</th>
                   <th className="px-3 py-2.5">Final Value</th>
                   <th className="px-3 py-2.5">Status</th>
                   <th className="px-3 py-2.5 text-right">Detail</th>
@@ -658,6 +665,9 @@ export default function BacktestPage() {
                     <td className="px-3 py-2 tabular-nums">{formatPercent(r.win_rate, 1)}</td>
                     <td className="px-3 py-2 tabular-nums">{formatNumber(r.profit_factor)}</td>
                     <td className="px-3 py-2 tabular-nums">{r.total_trades}</td>
+                    <td className={`px-3 py-2 tabular-nums ${(r.trades?.reduce((a, t) => a + (Number(t.pnl) || 0), 0) || 0) >= 0 ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
+                      {formatCurrency(r.trades?.reduce((a, t) => a + (Number(t.pnl) || 0), 0) || 0)}
+                    </td>
                     <td className="px-3 py-2 tabular-nums">{formatCurrency(r.final_value)}</td>
                     <td className="px-3 py-2">
                       {r.error ? (

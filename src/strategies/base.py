@@ -42,13 +42,17 @@ class BaseStrategy(bt.Strategy):
     STRATEGY_INDICATORS: Dict[str, any] = {}
     
     params = (
-        ('risk_pct', 0.02),       # 2% risk per trade
+        ('risk_pct', 1.0),        # Deprecated in sizing (kept for backward compatibility)
         ('use_bracket', True),    # Use bracket orders
         ('tp_pct', 3.0),          # Take profit 3%
         ('sl_pct', 1.5),          # Stop loss 1.5%
         ('trail_pct', 0.0),       # Trailing stop % (0 = disabled)
         ('trade_direction', 'both'),  # 'long', 'short', or 'both'
         ('leverage', 1),          # Leverage multiplier (1 = no leverage)
+        ('cash_buffer_pct', 0.995),  # Maximum usable cash ratio for position sizing
+        ('position_mode', 'full_cash'),  # fixed_units | fixed_notional | full_cash
+        ('fixed_units', 1.0),     # Used when position_mode=fixed_units
+        ('fixed_notional', 1000.0),  # Used when position_mode=fixed_notional
         ('log_trades', True),     # Log trades
     )
     
@@ -138,7 +142,7 @@ class BaseStrategy(bt.Strategy):
             self.losses += 1
             self.log(f'TRADE LOSS - PnL: {trade.pnl:.2f} ({trade.pnlcomm:.2f} after comm)')
     
-    def calculate_position_size(self, stop_price: float) -> float:
+    def calculate_position_size(self, stop_price: float = 0.0) -> float:
         """
         Calculate position size based on risk percentage.
         
@@ -150,19 +154,24 @@ class BaseStrategy(bt.Strategy):
         Returns:
             Position size (can be fractional for crypto)
         """
-        if stop_price <= 0:
-            return 0
-        
         current_price = self.dataclose[0]
-        risk_per_share = abs(current_price - stop_price)
-        
-        if risk_per_share <= 0:
+        if current_price <= 0:
             return 0
-        
-        # Calculate position size based on risk
-        portfolio_value = self.broker.getvalue()
-        risk_amount = portfolio_value * self.p.risk_pct
-        size = risk_amount / risk_per_share
+
+        # Position sizing mode
+        leverage = max(1, int(getattr(self.p, 'leverage', 1)))
+        buffer_pct = getattr(self.p, 'cash_buffer_pct', 0.995)
+        buffer_pct = max(0.05, min(1.0, float(buffer_pct)))
+        mode = str(getattr(self.p, 'position_mode', 'fixed_units')).lower()
+
+        if mode == 'fixed_units':
+            size = float(getattr(self.p, 'fixed_units', 1.0))
+        elif mode == 'fixed_notional':
+            fixed_notional = max(0.0, float(getattr(self.p, 'fixed_notional', 1000.0)))
+            size = (fixed_notional * leverage) / current_price if current_price > 0 else 0
+        else:  # full_cash
+            max_notional = self.broker.getcash() * buffer_pct * leverage
+            size = max_notional / current_price
         
         # Handle NaN values
         import math
@@ -178,15 +187,8 @@ class BaseStrategy(bt.Strategy):
             # Stocks: round to whole shares
             size = int(size)
         
-        # Apply leverage to position sizing
-        leverage = getattr(self.p, 'leverage', 1)
-        if leverage > 1:
-            size = size * leverage
-        
-        # Ensure we have enough cash (30% to leave buffer for bracket orders)
-        # Bracket orders require margin for entry + SL + TP orders
-        # With leverage, we can control larger positions
-        max_affordable = (self.broker.getcash() * 0.30 * leverage) / current_price
+        # Ensure we have enough cash while keeping a tiny reserve.
+        max_affordable = (self.broker.getcash() * buffer_pct * leverage) / current_price
         
         # Handle NaN for max_affordable
         if math.isnan(max_affordable) or math.isinf(max_affordable):
@@ -198,9 +200,13 @@ class BaseStrategy(bt.Strategy):
             max_affordable = int(max_affordable)
         
         size = min(size, max_affordable)
-        
+
         # Minimum size check
         min_size = 0.001 if current_price >= 1000 else 1
+        if current_price < 1000 and size < 1 and max_affordable >= 1:
+            # If risk-based size is too small but account can afford 1 share,
+            # allow a minimum executable lot to avoid false "0 trade" runs.
+            size = 1
         if size < min_size:
             return 0
         

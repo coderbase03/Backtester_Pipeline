@@ -8,7 +8,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Union
 
 import pandas as pd
 from sqlalchemy import create_engine, text
@@ -25,8 +25,14 @@ def _default_db_url() -> str:
 class Database:
     """SQL database wrapper (PostgreSQL-first) for OHLCV and backtest tables."""
 
-    def __init__(self, db_url: Optional[str] = None):
-        self.db_url = db_url or _default_db_url()
+    def __init__(self, db_url: Optional[Union[str, Path]] = None):
+        candidate = str(db_url) if db_url is not None else ""
+        # Backward compatibility: old code may pass sqlite file path.
+        # In PostgreSQL-first mode, ignore non-URL path inputs.
+        if candidate and "://" in candidate:
+            self.db_url = candidate
+        else:
+            self.db_url = _default_db_url()
         self.engine: Engine = create_engine(self.db_url, pool_pre_ping=True, future=True)
         self._create_tables()
         logger.info("Database initialized: %s", self.db_url)

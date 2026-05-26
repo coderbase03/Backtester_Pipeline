@@ -571,3 +571,38 @@ When making significant changes to the project, update the relevant docs:
 
 ### UI Rollback Note
 - Progress-console denemesi geri alındı; mevcut hedef stabil eski davranış + çalışan discovery akışı.
+
+---
+
+## May 26, 2026 Update - PostgreSQL-First Runtime + Backtest UX/Execution Fixes
+
+### PostgreSQL Runtime Stabilization
+- `src/data/manager.py` now initializes DB via `Database()` (URL-based), not legacy sqlite path from settings.
+- `src/data/database.py` made backward-compatible for accidental sqlite `Path` input:
+  - if ctor arg is not a URL (`://`), it falls back to `DATABASE_URL(_SYNC)`.
+- Fixes runtime error:
+  - `Expected string or URI object, got PosixPath('/app/data/trading.db')`
+
+### Multi Analyze Failure Fix (Mixed Symbol Sets)
+- `backend/app/services/backtest_service.py` now resolves exchange per symbol in multi runs:
+  - crypto pairs (`*USDT/*BUSD/*USDC`) -> `BINANCE`
+  - forex-like 6-char pairs -> `FX_IDC`
+  - equity symbols fallback to `NASDAQ` when invalid exchange is provided.
+- Applied to both:
+  - `run_multi_backtest()`
+  - `run_multi_analyze()`
+- Prevents matrix-wide failures like `download_failed: No data returned` for mixed sets (`BTCUSDT, ETHUSDT, AAPL`).
+
+### Backtest Sizing & UX Alignment
+- Strategy sizing kept as **full-cash, 1x leverage** (user preference), with metrics focus on return/DD/sharpe/sortino/PF.
+- Removed temporary advanced sizing options from UI (`position_mode`, `fixed_units`, `fixed_notional`) to avoid strategy param mismatch errors.
+- Backtest page UX improvements:
+  - `Leverage` and `Direction` moved to top/main parameter area (always visible).
+  - Risk panel simplified to TP/SL/TSL + bracket toggle.
+  - Bracket label clarified: `Enable TP/SL/TSL (Bracket)`.
+
+### Notes
+- Frontend changes require rebuild to reflect in running container:
+  - `docker compose up -d --build frontend`
+- Backend hotfixes require:
+  - `docker compose up -d --build backend`
