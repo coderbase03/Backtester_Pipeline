@@ -200,3 +200,43 @@ Mevcut: Discovery-heavy (çok post topla, manuel incele)
 - Detaylı hata notları: `DEVELOPMENT_NOTES.md`
 - CLI kullanımı: `docs/CLI_GUIDE.md`
 - Kullanım rehberi: `docs/KULLANIM_REHBERI.md`
+
+---
+
+## 2026-05-26 Yeni Yapılacaklar (Eklenen)
+
+### 11) Cron Job Senaryosu (Data Downloader + Reddit Full Pipeline + Raporlama)
+**Öncelik:** Yüksek  
+**Durum:** Planlanacak
+- VDS üzerinde cron/scheduler tasarımı netleştirilecek.
+- Günlük veri indirme + Reddit collect/analyze + rapor üretimi uçtan uca otomatikleştirilecek.
+
+### 12) Reddit Analiz Skorlama/Strateji Derin Çalışması
+**Öncelik:** Yüksek  
+**Durum:** Planlanacak
+- Stage-1/Stage-2 skorlamaları yeniden kalibre edilecek.
+- Actionable strategy tespit kalitesi ve false positive oranı iyileştirilecek.
+
+### 13) GLM -> DeepSeek v4 Pro Geçişi
+**Öncelik:** Yüksek  
+**Durum:** Planlanacak
+- Kod üretim ve/veya uygun pipeline adımlarında DeepSeek v4 Pro entegrasyonu yapılacak.
+- Maliyet/kalite/latency karşılaştırması raporlanacak.
+
+### 14) Analiz Model Karşılaştırması (o4-mini vs DeepSeek v4 Flash)
+**Öncelik:** Yüksek  
+**Durum:** Planlanacak
+- Aynı veri setinde model bazlı analiz benchmark çalıştırılacak.
+- Doğruluk, tutarlılık, token maliyeti, hız metrikleri kıyaslanacak.
+
+### 15) Canlıya Alım + Stabilizasyon Test Dönemi
+**Öncelik:** Yüksek  
+**Durum:** Planlanacak
+- Proje production ortamına alınacak.
+- Belirli bir gözlem süresinde (ör. 1-2 hafta) stabilite/kalite takibi yapılacak.
+
+### 16) Token Bazlı Maliyet Takibi (Detaylı)
+**Öncelik:** Yüksek  
+**Durum:** Planlanacak
+- Provider/model/stage bazında input-output token ve USD maliyet logları standardize edilecek.
+- Dashboard/rapor katmanında maliyet görünürlüğü artırılacak.
