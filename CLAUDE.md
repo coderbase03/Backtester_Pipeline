@@ -606,3 +606,11 @@ When making significant changes to the project, update the relevant docs:
   - `docker compose up -d --build frontend`
 - Backend hotfixes require:
   - `docker compose up -d --build backend`
+
+## Critical Repository Safety Rule (Permanent)
+
+- **DO NOT TOUCH `Opus_Backtrader` REPOSITORY.**
+- Remote alias `opus_old` (`https://github.com/coderbase03/Opus_Backtrader`) is **strictly forbidden** for all operations.
+- Allowed remote for this project is only:
+  - `origin` -> `https://github.com/coderbase03/Backtester_Pipeline.git`
+- Never push, pull, merge, rebase, or force-push against `Opus_Backtrader`.
